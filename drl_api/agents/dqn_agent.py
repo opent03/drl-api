@@ -1,3 +1,5 @@
+import numpy as np
+
 from drl_api.agents import Agent
 from drl_api.memory import ReplayMemory
 
