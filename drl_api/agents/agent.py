@@ -73,3 +73,7 @@ class Agent(metaclass=ABCMeta):
     def act_eval(self, state):
         '''Choose an action at evaluation time'''
         pass
+
+    @abstractmethod
+    def train(self, episodes):
+        pass

@@ -26,8 +26,8 @@ class DQN_Model(Model):
         self.lr = lr
 
         # Initialize networks
-        self.Q_eval = DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='eval')
-        self.Q_target = DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='target')
+        self.Q_eval = _DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='eval')
+        self.Q_target = _DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='target')
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
 
     def learn(self, *args, **kwargs):
@@ -59,10 +59,10 @@ class DQN_Model(Model):
 
 
 
-class DQN(nn.Module):
+class _DQN(nn.Module):
     ''' Basic Implementation of common DQN nets '''
     def __init__(self, in_dim, out_dim, lr, name='eval', nntype='conv'):
-        super(DQN, self).__init__()
+        super(_DQN, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
         self.fc_in_dim = 5
@@ -74,6 +74,7 @@ class DQN(nn.Module):
             self.fc2 = nn.Linear(512,512)
             self.fc3 = nn.Linear(512, self.out_dim)
         elif self.nntype == 'conv':
+            print(self.in_dim)
             self.conv = nn.Sequential(
                 nn.Conv2d(self.in_dim, 32, kernel_size=8, stride=4),
                 nn.ReLU(),

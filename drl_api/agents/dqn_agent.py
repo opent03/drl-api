@@ -10,8 +10,6 @@ class DQN_agent(Agent):
     def __init__(self,
                  target_update,
                  batch_size,
-                 eps,
-                 stop_step,
                  memory_size=1e6,
                  *args,
                  **kwargs
@@ -21,19 +19,25 @@ class DQN_agent(Agent):
 
         # Training data
         self.batch_size = batch_size
-        self.eps = eps
-        self.stop_step = stop_step  # Step at which training stops
 
         self.target_update = target_update    # Period at which target network is updated
         self.replay_memory = ReplayMemory(memory_size)
 
+        # Logging data
+        self.scores = []
+        self.avg_scores = []
+        self.eps_history = []
 
-    def train_step(self):
+
+    def train_step(self, render=False):
         '''Sample a 1-episode trajectory and learn simultaneously'''
-
+        score = 0
         obs = self.env.reset()
         done = False
         while not done:
+            if render:
+                self.env.render()
+
             if self._terminate:
                 break
 
@@ -43,8 +47,11 @@ class DQN_agent(Agent):
             # run action
             obs_, reward, done, info = self.env.step(action)
 
+            # save score
+            score += reward
+
             # store transition in replay buffer
-            self.replay_memory.push()
+            self.store_transition(obs, action, reward, obs_, done)
 
             # learn something
             if self.replay_memory.counter > self.batch_size:
@@ -61,6 +68,12 @@ class DQN_agent(Agent):
             if self.agent_step % self.target_update == 0:
                 self.model.replace_target_network()
                 print('Step {}: Target Q-Net replaced!'.format(self.agent_step))
+
+        return score
+
+
+    def store_transition(self, *args):
+        self.replay_memory.push(*args)
 
 
     def learn(self, *args, **kwargs):
@@ -99,3 +112,18 @@ class DQN_agent(Agent):
             obs_len = 1
 
         return obs_shape, obs_dtype, obs_len, n_actions
+
+
+    def train(self, episodes, *args, **kwargs):
+        for episode in range(episodes):
+            self.eps_history.append(self.model.eps)
+
+            #train
+            score = self.train_step(*args, **kwargs)
+            self.scores.append(score)
+            avg_score = np.mean(self.scores[-100:])
+            self.avg_scores.append(avg_score)
+
+            fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.4f}'
+            print(fmt.format(episode+1, score, avg_score, self.model.eps))
+
