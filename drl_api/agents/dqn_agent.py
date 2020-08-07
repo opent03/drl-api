@@ -47,24 +47,45 @@ class DQN_agent(Agent):
             self.replay_memory.push()
 
             # learn something
-            self.learn()
+            if self.replay_memory.counter > self.batch_size:
+                # feed in a random batch
+                random_batch = self.replay_memory.sample(batch_size=self.batch_size)
+                s, a, r, s_, t = self.feed_dict(random_batch)
+                self.learn(s=s, a=a, r=r, s_=s_, t=t)
             obs = obs_
 
+            # update agent step conuter
+            self.agent_step += 1
 
-    def learn(self):
+            # update target network
+            if self.agent_step % self.target_update == 0:
+                self.model.replace_target_network()
+                print('Step {}: Target Q-Net replaced!'.format(self.agent_step))
+
+
+    def learn(self, *args, **kwargs):
         '''agent learns, determined by agent's model'''
-        self.model.learn()
+        self.model.learn(*args, **kwargs)
+
 
     def act_train(self, state):
         '''Choose an action at training time'''
-        pass
+        if np.random.random() > self.eps:
+            action = self.model.get_action(state)
+        else:
+            action = np.random.choice(self.model.n_actions)
+
+        return action
 
 
     def act_eval(self, state):
-        '''Choose an action at evaluation time'''
-        pass
+        ''' Choose an action at evaluation time '''
+        ''' We make it so it follows behavior policy '''
+        return self.model.get_action(state)
+
 
     def get_env_specs(self, stack_frames):
+        ''' gets env parameters '''
         n_actions = self.env.action_space.n
         obs_shape = self.env.observation_space.shape
         obs_shape = list(obs_shape)

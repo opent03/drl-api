@@ -10,7 +10,6 @@ class Agent(metaclass=ABCMeta):
     def __init__(self,
                  model,
                  env,
-                 **model_kwargs
                  ):
 
         # Env data
@@ -18,7 +17,6 @@ class Agent(metaclass=ABCMeta):
 
         # Model data
         self.model = model
-        self.model_kwargs = model_kwargs
 
         # Training data
         self.agent_step = 0
@@ -52,6 +50,7 @@ class Agent(metaclass=ABCMeta):
             reward_batch.append(batch[i].reward)
             new_state_batch.append(batch[i].next_state)
             terminal_batch.append(batch[i].terminal)
+        return state_batch, action_batch, reward_batch, new_state_batch, terminal_batch
 
 
     @abstractmethod

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-from abc import ABCMeta, abstractmethod
+import numpy as np
 from drl_api.models import Model
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -30,17 +30,37 @@ class DQN_Model(Model):
         self.Q_target = DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='target')
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
 
-    def learn(self):
-        pass
+    def learn(self, *args, **kwargs):
+        ''' basic DQN learn '''
+        self.Q_eval.optimizer.zero_grad()
 
-    def _conv_nn(self, x):
-        pass
+        # convert to torch tensor types, variables are local
+        batch_dict = dict((k,torch.tensor(v).to(self.Q_eval.device)) for k, v in kwargs)
+        batch_size = batch_dict['s'].shape[0]
+        batch_index = np.arange(batch_size, dtype=np.int32)
 
-    def _dense_nn(self, x):
-        pass
+        # dqn step
+        q_eval = self.Q_eval.forward(batch_dict['s'])[batch_index, batch_dict['a']]
+        q_next = self.Q_target.forward(batch_dict['s_'])
+        q_next[batch_dict['t']] = 0.0
+        q_target = batch_dict['r'] + self.gamma * torch.max(q_next, dim=1)[0]
+        loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
+        loss.backward()
+        self.Q_eval.optimizer.step()
+
+    def get_action(self, state):
+        ''' passes action through net and do some argmax thingies '''
+        state = torch.tensor(state, dtype=torch.float32).to(self.Q_eval.device)
+        q_vals = self.Q_eval(state)
+        return torch.argmax(q_vals).item()
+
+    def replace_target_network(self):
+        self.Q_target.load_state_dict(self.Q_eval.state_dict())
+
+
 
 class DQN(nn.Module):
-    ''' Basic Implementation of DQN '''
+    ''' Basic Implementation of common DQN nets '''
     def __init__(self, in_dim, out_dim, lr, name='eval', nntype='conv'):
         super(DQN, self).__init__()
         self.in_dim = in_dim
