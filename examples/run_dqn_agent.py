@@ -30,7 +30,7 @@ def make_agent(stack=4):
                              )
 
     # create agent
-    agent = agents.DQN_agent(target_update=1e5,
+    agent = agents.DQN_agent(target_update=1e2,
                              batch_size=args.batch_size,
                              memory_size=1e6,
                              env=env,

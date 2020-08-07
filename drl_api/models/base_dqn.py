@@ -26,16 +26,19 @@ class DQN_Model(Model):
         self.lr = lr
 
         # Initialize networks
-        self.Q_eval = _DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='eval')
-        self.Q_target = _DQN(in_dim=obs_shape, out_dim=n_actions, lr=lr, name='target')
+        self.Q_eval = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='eval')          # get channel component
+        self.Q_target = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='target')      # get channel component
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
+        self.Q_eval.to(self.Q_eval.device)
+        self.Q_target.to(self.Q_target.device)
+
 
     def learn(self, *args, **kwargs):
         ''' basic DQN learn '''
         self.Q_eval.optimizer.zero_grad()
 
         # convert to torch tensor types, variables are local
-        batch_dict = dict((k,torch.tensor(v).to(self.Q_eval.device)) for k, v in kwargs)
+        batch_dict = dict((k,torch.tensor(v).to(self.Q_eval.device)) for k, v in kwargs.items())
         batch_size = batch_dict['s'].shape[0]
         batch_index = np.arange(batch_size, dtype=np.int32)
 
@@ -65,7 +68,7 @@ class _DQN(nn.Module):
         super(_DQN, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.fc_in_dim = 5
+        self.fc_in_dim = 2048
         self.nntype = nntype
 
         # select architecture
@@ -74,7 +77,6 @@ class _DQN(nn.Module):
             self.fc2 = nn.Linear(512,512)
             self.fc3 = nn.Linear(512, self.out_dim)
         elif self.nntype == 'conv':
-            print(self.in_dim)
             self.conv = nn.Sequential(
                 nn.Conv2d(self.in_dim, 32, kernel_size=8, stride=4),
                 nn.ReLU(),

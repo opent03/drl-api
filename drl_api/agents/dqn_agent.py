@@ -32,7 +32,7 @@ class DQN_agent(Agent):
     def train_step(self, render=False):
         '''Sample a 1-episode trajectory and learn simultaneously'''
         score = 0
-        obs = self.env.reset()
+        obs = self._format_img(self.env.reset())
         done = False
         while not done:
             if render:
@@ -46,6 +46,7 @@ class DQN_agent(Agent):
 
             # run action
             obs_, reward, done, info = self.env.step(action)
+            obs_ = self._format_img(obs_)
 
             # save score
             score += reward
@@ -83,7 +84,7 @@ class DQN_agent(Agent):
 
     def act_train(self, state):
         '''Choose an action at training time'''
-        if np.random.random() > self.eps:
+        if np.random.random() > self.model.eps:
             action = self.model.get_action(state)
         else:
             action = np.random.choice(self.model.n_actions)
@@ -127,3 +128,9 @@ class DQN_agent(Agent):
             fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.4f}'
             print(fmt.format(episode+1, score, avg_score, self.model.eps))
 
+
+    def _format_img(self, img):
+        ''' changes the format into something pytorch will be happy about '''
+        # current: W x H x C
+        # change to: C x W x H
+        return np.transpose(img, (2,0,1))
