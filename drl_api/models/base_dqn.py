@@ -10,7 +10,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class DQN_Model(Model):
     '''Model class, maintains an inner neural network, contains learn method'''
 
-    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=9e-6):
+    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=9e-7):
 
         assert len(obs_shape) == 3 or len(obs_shape) == 1
 

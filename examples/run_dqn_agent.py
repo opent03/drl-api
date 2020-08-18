@@ -30,21 +30,21 @@ def make_agent(stack=4):
                              )
 
     # create agent
-    agent = agents.DQN_agent(target_update=1e3,
+    agent = agents.DQN_agent(target_update=1e4,
                              batch_size=args.batch_size,
-                             memory_size=1e5,
+                             memory_size=1e6,
                              learn_frequency=4,
                              env_train=env['env_train'],
                              env_eval=env['env_eval'],
                              model=model
                              )
-    return agent
+    return agent, args
 
 def main():
-    agent = make_agent(stack=3)
+    agent, args = make_agent(stack=4)
 
     # train loop
-    agent.train(episodes=int(1e5), render=True)
+    agent.train(episodes=int(1e5), render=args.render)
 
 
 if __name__ == '__main__':
