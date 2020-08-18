@@ -37,8 +37,8 @@ class DQN_agent(Agent):
         obs = self._format_img(self.env_train.reset())
         done = False
         while not done:
-            #if render:
-                #self.env_train.render()
+            if render:
+                self.env_train.render()
 
 
             if self._terminate:

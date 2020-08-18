@@ -42,7 +42,6 @@ def make_agent(stack=4):
 
 def main():
     agent, args = make_agent(stack=4)
-
     # train loop
     agent.train(episodes=int(1e5), render=args.render)
 
