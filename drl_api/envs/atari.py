@@ -220,7 +220,7 @@ class StackFrames(gym.Wrapper):
     return np.concatenate(self.obs_buf, axis=-1)
 
 
-def wrap_deepmind_atari(env, mode, stack=4):
+def wrap_deepmind_atari(env_id, stack=3):
   """Wraps an Atari environment to have the same settings as in the original DQN Nature paper by Deepmind.
   Args:
     env: gym.Env
@@ -229,13 +229,18 @@ def wrap_deepmind_atari(env, mode, stack=4):
   Returns:
     The wrapped environment
   """
-  if not isinstance(env.unwrapped, gym.envs.atari.AtariEnv):
-    raise ValueError("Applying atari wrappers to the non-atari env {} is not allowed".format(env.spec.id))
-  assert 'NoFrameskip' in env.spec.id
-  assert mode in ['t', 'e']
+  assert 'NoFrameskip' in env_id
+  envs = {'env_train': apply_wraps(gym.make(env_id), mode='t', stack=stack),
+          'env_eval':  apply_wraps(gym.make(env_id), mode='e', stack=stack)
+          }
 
+  return envs
+
+
+def apply_wraps(env, mode, stack):
   if mode == 't':
     env = EpisodicLifeEnv(env)
+
   env = NoopResetEnv(env, noop_max=30)
   env = MaxAndRepeatEnv(env, repeat=4)
   if 'FIRE' in env.unwrapped.get_action_meanings():

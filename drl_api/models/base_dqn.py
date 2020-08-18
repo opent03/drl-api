@@ -10,7 +10,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class DQN_Model(Model):
     '''Model class, maintains an inner neural network, contains learn method'''
 
-    def __init__(self, obs_shape, n_actions, eps, gamma, lr):
+    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=9e-7):
 
         assert len(obs_shape) == 3 or len(obs_shape) == 1
 
@@ -22,7 +22,7 @@ class DQN_Model(Model):
         self.act_dtype = torch.uint8
         self.act_shape = []
         self.n_actions = n_actions
-        self.eps = eps
+        self.eps = _eps(eps, min_eps, eps_decay)
         self.lr = lr
 
         # Initialize networks
@@ -95,7 +95,7 @@ class _DQN(nn.Module):
             exit(1)
 
         self.name = name
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.optimizer = optim.RMSprop(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
         self.device = device
 
@@ -119,3 +119,18 @@ class _DQN(nn.Module):
             exit(1)
 
         return qvals
+
+class _eps:
+    ''' linear epsilon scheduler '''
+    def __init__(self, eps, min_eps, decay):
+        self.eps = eps
+        self.min_eps = min_eps
+        self.decay = decay
+
+    def get_eps(self):
+        ''' get epsilon + decay '''
+        self.eps = max(self.min_eps, self.eps - self.decay)
+        return self.eps
+
+    def get_eps_no_decay(self):
+        return self.eps

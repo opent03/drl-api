@@ -17,9 +17,9 @@ def make_agent(stack=4):
     model_choices = ["DQN"]
     args = args_parser.parse_args(model_choices)
 
-    # create environment
-    env = envs.wrap_deepmind_atari(gym.make(args.env_id), mode='t', stack=stack)
-    obs_shape, obs_dtype, obs_len, n_actions = envs.get_env_specs(env, stack)
+    # create environments
+    env = envs.wrap_deepmind_atari(args.env_id, stack=stack)
+    obs_shape, obs_dtype, obs_len, n_actions = envs.get_env_specs(env['env_train'], stack)
 
     # create model
     model = models.DQN_Model(obs_shape=obs_shape,
@@ -30,19 +30,21 @@ def make_agent(stack=4):
                              )
 
     # create agent
-    agent = agents.DQN_agent(target_update=1e2,
+    agent = agents.DQN_agent(target_update=1e4,
                              batch_size=args.batch_size,
                              memory_size=1e6,
-                             env=env,
+                             learn_frequency=4,
+                             env_train=env['env_train'],
+                             env_eval=env['env_eval'],
                              model=model
                              )
     return agent
 
 def main():
-    agent = dqn_agent = make_agent(stack=4)
+    agent = make_agent(stack=3)
 
     # train loop
-    agent.train(episodes=250, render=True)
+    agent.train(episodes=2500, render=True)
 
 
 if __name__ == '__main__':

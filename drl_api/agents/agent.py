@@ -9,11 +9,13 @@ class Agent(metaclass=ABCMeta):
 
     def __init__(self,
                  model,
-                 env,
+                 env_train,
+                 env_eval,
                  ):
 
         # Env data
-        self.env = env
+        self.env_train = env_train
+        self.env_eval = env_eval
 
         # Model data
         self.model = model
@@ -27,19 +29,20 @@ class Agent(metaclass=ABCMeta):
 
     def eval_step(self):
         '''1-episode evaluation'''
-
-        obs = self.env.reset()
+        score = 0
+        obs = self.env_eval.reset()
         done = False
         while not done:
             if self._terminate:
                 break
             action = self.act_eval(obs)
-            obs_, reward, done, info = self.env.step(action)
-
+            obs_, reward, done, info = self.env_eval.step(action)
+            score += reward
             if done:
-                obs_ = self.env.reset()
+                obs_ = self.env_eval.reset()
             obs = obs_
 
+        return score
 
     def feed_dict(self, batch):
         state_batch, action_batch, reward_batch, new_state_batch, terminal_batch = [], [], [], [], []
