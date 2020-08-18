@@ -142,18 +142,18 @@ class DQN_agent(Agent):
             self.eps_history.append(self.model.eps.get_eps_no_decay())
 
             #train
-            print('\n --- Beginning training loop: Episode {} --- \n'.format(episode+1))
+            #print('\n --- Beginning training loop: Episode {} --- \n'.format(episode+1))
             score = self.train_step(*args, **kwargs)
             self.scores.append(score)
             avg_score = np.mean(self.scores[-100:])
             self.avg_scores.append(avg_score)
-            print('\n --- Training loop done! --- \n')
+            #print('\n --- Training loop done! --- \n')
             #eval
             #print('\n --- Starting evaluation sequence --- \n')
             #eval_score = self.eval_step()
             #self.eval_scores.append(eval_score)
            # print('\n --- Evaluation sequence done! --- \n')
-            fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}\n'
+            fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}'
             print(fmt.format(episode+1,
                              score,
                              avg_score,
