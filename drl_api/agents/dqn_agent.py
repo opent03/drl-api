@@ -75,7 +75,7 @@ class DQN_agent(Agent):
         return score
 
 
-    def eval_step(self, render=True):
+    def eval_step(self, render=False):
         '''1-episode evaluation'''
         score = 0
         obs = self._format_img(self.env_eval.reset())
