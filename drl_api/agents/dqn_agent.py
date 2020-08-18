@@ -40,10 +40,6 @@ class DQN_agent(Agent):
             if render:
                 self.env_train.render()
 
-
-            if self._terminate:
-                break
-
             # get action
             action = self.act_train(obs)
 
