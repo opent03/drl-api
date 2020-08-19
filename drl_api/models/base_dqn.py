@@ -10,7 +10,7 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class DQN_Model(Model):
     '''Model class, maintains an inner neural network, contains learn method'''
 
-    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=6e-6):
+    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=6e-6, gpu=True):
 
         assert len(obs_shape) == 3 or len(obs_shape) == 1
 
@@ -26,8 +26,8 @@ class DQN_Model(Model):
         self.lr = lr
 
         # Initialize networks
-        self.Q_eval = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='eval')          # get channel component
-        self.Q_target = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='target')      # get channel component
+        self.Q_eval = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='eval',gpu=gpu)          # get channel component
+        self.Q_target = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='target', gpu=gpu)      # get channel component
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
         self.Q_eval.to(self.Q_eval.device)
         self.Q_target.to(self.Q_target.device)
@@ -64,7 +64,7 @@ class DQN_Model(Model):
 
 class _DQN(nn.Module):
     ''' Basic Implementation of common DQN nets '''
-    def __init__(self, in_dim, out_dim, lr, name='eval', nntype='conv'):
+    def __init__(self, in_dim, out_dim, lr, name='eval', nntype='conv', gpu=True):
         super(_DQN, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
@@ -97,10 +97,10 @@ class _DQN(nn.Module):
         self.name = name
         self.optimizer = optim.RMSprop(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
-        self.device = device
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() and gpu else 'cpu')
 
     def forward(self, x):
-        x = torch.tensor(x, dtype=torch.float).to(device)
+        x = torch.tensor(x, dtype=torch.float).to(self.device)
         qvals = None
         if self.nntype == 'dense':
             x = self.fc1(x)

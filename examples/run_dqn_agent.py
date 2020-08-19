@@ -26,7 +26,8 @@ def make_agent(stack=4):
                              n_actions=n_actions,
                              eps=args.eps,
                              gamma=args.gamma,
-                             lr=args.lr
+                             lr=args.lr,
+                             gpu=args.gpu
                              )
 
     # create agent
