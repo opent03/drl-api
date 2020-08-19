@@ -13,4 +13,3 @@ class Model(metaclass=ABCMeta):
         self.obs_shape = None
         self.act_dtype = None
         self.act_shape = None
-

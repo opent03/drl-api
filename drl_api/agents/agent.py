@@ -11,11 +11,13 @@ class Agent(metaclass=ABCMeta):
                  model,
                  env_train,
                  env_eval,
+                 env_name,
                  ):
 
         # Env data
         self.env_train = env_train
         self.env_eval = env_eval
+        self.env_name = env_name
 
         # Model data
         self.model = model

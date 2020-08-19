@@ -2,7 +2,7 @@ import numpy as np
 
 from drl_api.agents import Agent
 from drl_api.memory import ReplayMemory
-
+import drl_api.utils as utils
 
 class DQN_agent(Agent):
     '''Base class for a DQN agent. Uses target networks and experience replay.'''
@@ -30,7 +30,6 @@ class DQN_agent(Agent):
         self.avg_scores = []
         self.eps_history = []
 
-
     def train_step(self, render=False):
         '''Sample a 1-episode trajectory and learn simultaneously'''
         score = 0
@@ -54,7 +53,7 @@ class DQN_agent(Agent):
             self.store_transition(obs, action, reward, obs_, done)
 
             # learn something
-            if self.replay_memory.counter > self.batch_size and self.agent_step % 4 == 0:
+            if self.replay_memory.counter > self.batch_size and self.agent_step % self.learn_frequency == 0:
                 # feed in a random batch
                 random_batch = self.replay_memory.sample(batch_size=self.batch_size)
                 s, a, r, s_, t = self.feed_dict(random_batch)
@@ -69,26 +68,26 @@ class DQN_agent(Agent):
                 self.model.replace_target_network()
                 print('Step {}: Target Q-Net replaced!'.format(self.agent_step))
 
+        # save architecture if best
+        if score > np.max(self.scores + [0]):
+            utils.save.save_model(self.model.Q_eval, 'drl_api/saves', self.env_name)
+            print('Best score achieved, parameters are saved!')
         return score
 
 
     def eval_step(self, render=False):
         '''1-episode evaluation'''
         score = 0
+        count = 0
         obs = self._format_img(self.env_eval.reset())
         done = False
         while not done:
-
-            if self._terminate:
-                break
+            count += 1
             action = self.act_eval(obs)
             obs_, reward, done, info = self.env_eval.step(action)
             obs_ = self._format_img(obs_)
             score += reward
-            if done:
-                obs_ = self.env_eval.reset()
             obs = obs_
-
         return score
 
     def store_transition(self, *args):
@@ -146,7 +145,7 @@ class DQN_agent(Agent):
             self.avg_scores.append(avg_score)
             #print('\n --- Training loop done! --- \n')
             #eval
-            #print('\n --- Starting evaluation sequence --- \n')
+            #print(' --- Starting evaluation sequence --- ')
             #eval_score = self.eval_step()
             #self.eval_scores.append(eval_score)
            # print('\n --- Evaluation sequence done! --- \n')

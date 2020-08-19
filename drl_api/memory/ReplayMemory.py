@@ -20,8 +20,6 @@ class ReplayMemory(object):
         self.memory[self.position] = Transition(*args)
         self.position = int((self.position + 1) % self.capacity)
         self.counter += 1
-        if self.counter > self.capacity:
-            print('Full Replay Memory')
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)

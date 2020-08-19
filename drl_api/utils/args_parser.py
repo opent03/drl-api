@@ -14,6 +14,7 @@ def parse_args(model_choices):
     parser.add_argument('--gamma', default=0.99, type=np.float32)
     parser.add_argument('--lr' , default=2.5e-4, type=np.float32)
     parser.add_argument('--render', dest='render', action='store_true')
+    parser.add_argument('--episodes', default=10000, type=int)
     args = parser.parse_args()
 
     # Fetch default arguments for model
