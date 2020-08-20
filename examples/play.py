@@ -2,6 +2,10 @@
 Basic module to load a bot and play a game
 '''
 from drl_api import envs, models, agents
+import os
+import argparse
+
+
 def load_model(path, name,  stack):
     env_id = name
     print(env_id)
@@ -29,11 +33,17 @@ def load_model(path, name,  stack):
 
     return agent
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--save_name', required=True, type=str)
+    return parser.parse_args()
 
 def main():
     # do something here
-    path = 'drl_api/saves/BreakoutNoFrameskip-v4-_DQN'
-    name = 'BreakoutNoFrameskip-v4'         # i don't care
+    args = parse_args()
+    saves_path = 'drl_api/saves'
+    path = os.path.join(saves_path, args.save_name)
+    name = args.save_name.split('_')[0][:-1]
     agent = load_model(path, name, stack=4)
     agent.play(rounds=50)
 
