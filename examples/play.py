@@ -36,6 +36,7 @@ def load_model(path, name,  stack):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_name', required=True, type=str)
+    parser.add_argument('--rounds', default=50, type=int)
     return parser.parse_args()
 
 def main():
@@ -45,7 +46,7 @@ def main():
     path = os.path.join(saves_path, args.save_name)
     name = args.save_name.split('_')[0][:-1]
     agent = load_model(path, name, stack=4)
-    agent.play(rounds=50)
+    agent.play(rounds=args.rounds)
 
 if __name__ == '__main__':
     main()
