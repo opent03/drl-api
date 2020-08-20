@@ -220,7 +220,7 @@ class StackFrames(gym.Wrapper):
     return np.concatenate(self.obs_buf, axis=-1)
 
 
-def wrap_deepmind_atari(env_id, stack=3):
+def wrap_deepmind_atari(env_id, stack=4):
   """Wraps an Atari environment to have the same settings as in the original DQN Nature paper by Deepmind.
   Args:
     env: gym.Env

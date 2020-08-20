@@ -131,6 +131,8 @@ class DQN_agent(Agent):
 
         return obs_shape, obs_dtype, obs_len, n_actions
 
+    def load_save(self, *args, **kwargs):
+        self.model.load_save(*args, **kwargs)
 
     def train(self, episodes, *args, **kwargs):
         self.eval_scores = []
@@ -154,9 +156,3 @@ class DQN_agent(Agent):
                              score,
                              avg_score,
                              self.model.eps.get_eps_no_decay(),0))
-
-    def _format_img(self, img):
-        ''' changes the format into something pytorch will be happy about '''
-        # current: W x H x C
-        # change to: C x W x H
-        return np.transpose(img, (2,0,1))

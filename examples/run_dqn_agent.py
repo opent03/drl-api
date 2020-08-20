@@ -18,16 +18,17 @@ def make_agent(stack=4):
     args = args_parser.parse_args(model_choices)
 
     # create environments
-    env = envs.wrap_deepmind_atari(args.env_id, stack=stack)
-    obs_shape, obs_dtype, obs_len, n_actions = envs.get_env_specs(env['env_train'], stack)
-
+    env = envs.make_env(args.env_id, stack=stack)
+    env_specs = envs.get_env_specs(env['env_train'], stack)
+    nntype = 'conv' if 'NoFrameskip' in args.env_id else 'dense'
+    env_name = args.env_id.replace('/','')
     # create model
-    model = models.DQN_Model(obs_shape=obs_shape,
-                             n_actions=n_actions,
+    model = models.DQN_Model(env_specs=env_specs,
                              eps=args.eps,
                              gamma=args.gamma,
                              lr=args.lr,
-                             gpu=args.gpu
+                             gpu=args.gpu,
+                             nntype=nntype
                              )
 
     # create agent
@@ -37,7 +38,7 @@ def make_agent(stack=4):
                              learn_frequency=4,
                              env_train=env['env_train'],
                              env_eval=env['env_eval'],
-                             env_name = args.env_id,
+                             env_name = env_name,
                              model=model
                              )
     return agent, args

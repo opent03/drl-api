@@ -10,30 +10,40 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 class DQN_Model(Model):
     '''Model class, maintains an inner neural network, contains learn method'''
 
-    def __init__(self, obs_shape, n_actions, eps, gamma, lr, min_eps=0.1, eps_decay=6e-6, gpu=True):
+    def __init__(self,
+                 env_specs,
+                 eps,
+                 gamma,
+                 lr,
+                 min_eps=0.1,
+                 eps_decay=1e-5,
+                 gpu=True,
+                 nntype='conv'):
 
-        assert len(obs_shape) == 3 or len(obs_shape) == 1
 
         super().__init__()
 
         self.gamma = gamma
-        self.obs_dtype = torch.uint8 if len(obs_shape) == 3 else torch.float32
-        self.obs_shape = obs_shape
+        self.env_specs = env_specs
+        self.obs_dtype = torch.uint8 if len(env_specs['obs_shape']) == 3 else torch.float32
+        self.obs_shape = env_specs['obs_shape']
         self.act_dtype = torch.uint8
-        self.act_shape = []
-        self.n_actions = n_actions
+        self.n_actions = env_specs['n_actions']
+        self.in_dims = env_specs['in_dims']
+        print(eps)
         self.eps = _eps(eps, min_eps, eps_decay)
         self.lr = lr
-
+        self.gpu = gpu
+        self.nntype = nntype
         # Initialize networks
-        self.Q_eval = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='eval',gpu=gpu)          # get channel component
-        self.Q_target = _DQN(in_dim=obs_shape[2], out_dim=n_actions, lr=lr, name='target', gpu=gpu)      # get channel component
+        self.Q_eval = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=lr, name='eval',gpu=self.gpu, nntype=self.nntype)          # get channel component
+        self.Q_target = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=lr, name='target', gpu=self.gpu, nntype=self.nntype)      # get channel component
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
         self.Q_eval.to(self.Q_eval.device)
         self.Q_target.to(self.Q_target.device)
 
 
-    def learn(self, *args, **kwargs):
+    def learn(self, **kwargs):
         ''' basic DQN learn '''
         self.Q_eval.optimizer.zero_grad()
 
@@ -60,6 +70,10 @@ class DQN_Model(Model):
     def replace_target_network(self):
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
 
+    def load_save(self, path):
+        self.Q_eval.load_state_dict(torch.load(path))
+        self.Q_target.load_state_dict(torch.load(path))
+
 
 
 class _DQN(nn.Module):
@@ -68,14 +82,18 @@ class _DQN(nn.Module):
         super(_DQN, self).__init__()
         self.in_dim = in_dim
         self.out_dim = out_dim
-        self.fc_in_dim = 2048
+        self.fc_in_dim = 2048       # to be used with CNN
         self.nntype = nntype
 
         # select architecture
         if self.nntype == 'dense':
-            self.fc1 = nn.Linear(in_dim, 512)
-            self.fc2 = nn.Linear(512,512)
-            self.fc3 = nn.Linear(512, self.out_dim)
+            self.fc = nn.Sequential(
+                nn.Linear(self.in_dim, 512),
+                nn.ReLU(),
+                nn.Linear(512, 512),
+                nn.ReLU(),
+                nn.Linear(512, self.out_dim)
+            )
         elif self.nntype == 'conv':
             self.conv = nn.Sequential(
                 nn.Conv2d(self.in_dim, 32, kernel_size=8, stride=4),
@@ -103,11 +121,7 @@ class _DQN(nn.Module):
         x = torch.tensor(x, dtype=torch.float).to(self.device)
         qvals = None
         if self.nntype == 'dense':
-            x = self.fc1(x)
-            x = F.relu(x)
-            x = self.fc2(x)
-            x = F.relu(x)
-            qvals = self.fc3(x)
+            qvals = self.fc(x)
 
         elif self.nntype == 'conv':
             x = self.conv(x)

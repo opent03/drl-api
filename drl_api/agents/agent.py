@@ -1,6 +1,4 @@
-import os
 import numpy as np
-import torch
 
 from abc import ABCMeta, abstractmethod
 
@@ -57,6 +55,36 @@ class Agent(metaclass=ABCMeta):
             terminal_batch.append(batch[i].terminal)
         return state_batch, action_batch, reward_batch, new_state_batch, terminal_batch
 
+    def play(self, rounds):
+        # a method for the agent to just play the game
+        score = 0
+        obs = self._format_img(self.env_eval.reset())
+        done = False
+        for _ in range(rounds):
+            print('begin round')
+            while not done:
+                self.env_eval.render()
+                action = self.act_train(obs)
+                # run action
+                obs_, reward, done, info = self.env_eval.step(action)
+                score += reward
+                if done:
+                    print('end of episode')
+                    obs = self.env_eval.reset()
+                obs = self._format_img(obs_)
+        return score
+
+
+
+    def _format_img(self, img):
+        ''' changes the format into something pytorch will be happy about '''
+        if len(img.shape) == 3:
+        # current: W x H x C
+        # change to: C x W x H
+            return np.transpose(img, (2,0,1))
+        else:
+            # need to flatten
+            return img.flatten()
 
     @abstractmethod
     def train_step(self):
