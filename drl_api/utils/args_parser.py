@@ -16,7 +16,7 @@ def parse_args(model_choices):
     parser.add_argument('--render', dest='render', action='store_true')
     parser.add_argument('--episodes', default=10000, type=int)
     parser.add_argument('--no-gpu', dest='gpu', action='store_false')
-    parser.add_argument('--mem-size', default=2e4, type=int)
+    parser.add_argument('--mem_size', default=2e4, type=int)
     args = parser.parse_args()
 
     # Fetch default arguments for model
