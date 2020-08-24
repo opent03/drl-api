@@ -28,7 +28,7 @@ def make_agent(stack=4):
                              eps=args.eps,
                              gamma=args.gamma,
                              lr=args.lr,
-                             memory_size=2e4,
+                             memory_size=args.mem_size,
                              gpu=args.gpu,
                              nntype=nntype
                              )
