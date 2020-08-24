@@ -44,6 +44,7 @@ class Agent(metaclass=ABCMeta):
 
         return score
 
+
     def feed_dict(self, batch):
         state_batch, action_batch, reward_batch, new_state_batch, terminal_batch = [], [], [], [], []
         for i in range(len(batch)):
@@ -54,6 +55,7 @@ class Agent(metaclass=ABCMeta):
             new_state_batch.append(batch[i].next_state)
             terminal_batch.append(batch[i].terminal)
         return state_batch, action_batch, reward_batch, new_state_batch, terminal_batch
+
 
     def play(self, rounds):
         # a method for the agent to just play the game
@@ -73,7 +75,6 @@ class Agent(metaclass=ABCMeta):
                     obs = self.env_eval.reset()
                 obs = self._format_img(obs_)
         return score
-
 
 
     def _format_img(self, img):

@@ -23,10 +23,12 @@ def make_agent(stack=4):
     nntype = 'conv' if 'NoFrameskip' in args.env_id else 'dense'
     env_name = args.env_id.replace('/','')
     # create model
-    model = models.DQN_Model(env_specs=env_specs,
+    model = models.DQN_Model(
+                             env_specs=env_specs,
                              eps=args.eps,
                              gamma=args.gamma,
                              lr=args.lr,
+                             memory_size=2e4,
                              gpu=args.gpu,
                              nntype=nntype
                              )
@@ -34,7 +36,6 @@ def make_agent(stack=4):
     # create agent
     agent = agents.DQN_agent(target_update=5e3,
                              batch_size=args.batch_size,
-                             memory_size=2e4,
                              learn_frequency=4,
                              env_train=env['env_train'],
                              env_eval=env['env_eval'],

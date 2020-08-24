@@ -7,7 +7,9 @@ Transition = namedtuple('Transition',
 
 class ReplayMemory(object):
     ''' From Pytorch documentation '''
-    def __init__(self, capacity):
+    def __init__(self, capacity, Transition=namedtuple('Transition',
+                        ('state', 'action', 'reward', 'next_state', 'terminal'))): # with default transition
+        self.Transition = Transition
         self.capacity = capacity
         self.memory = []
         self.position = 0
@@ -17,7 +19,7 @@ class ReplayMemory(object):
         """Saves a transition."""
         if len(self.memory) < self.capacity:
             self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
+        self.memory[self.position] = self.Transition(*args)
         self.position = int((self.position + 1) % self.capacity)
         self.counter += 1
 

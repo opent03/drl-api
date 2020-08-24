@@ -10,7 +10,6 @@ class DQN_agent(Agent):
     def __init__(self,
                  target_update,
                  batch_size,
-                 memory_size=1e6,
                  learn_frequency=4,     # learn something every 4 steps
                  *args,
                  **kwargs
@@ -22,13 +21,16 @@ class DQN_agent(Agent):
         self.batch_size = batch_size
 
         self.target_update = target_update    # Period at which target network is updated
-        self.replay_memory = ReplayMemory(memory_size)
         self.learn_frequency = learn_frequency
 
         # Logging data
         self.scores = []
         self.avg_scores = []
         self.eps_history = []
+
+        # initialize neural networks
+        self.model.init_networks()
+
 
     def train_step(self, render=False):
         '''Sample a 1-episode trajectory and learn simultaneously'''
@@ -50,14 +52,15 @@ class DQN_agent(Agent):
             score += reward
 
             # store transition in replay buffer
-            self.store_transition(obs, action, reward, obs_, done)
+            self.model.store_transition(obs, action, reward, obs_, done)
 
             # learn something
-            if self.replay_memory.counter > self.batch_size and self.agent_step % self.learn_frequency == 0:
+            if self.model.get_counter() > self.batch_size and self.agent_step % self.learn_frequency == 0:
                 # feed in a random batch
-                random_batch = self.replay_memory.sample(batch_size=self.batch_size)
-                s, a, r, s_, t = self.feed_dict(random_batch)
-                self.learn(s=s, a=a, r=r, s_=s_, t=t)
+                random_batch = self.model.sample(batch_size=self.batch_size)
+                # s, a, r, s_, t = self.feed_dict(random_batch)
+                # self.learn(s=s, a=a, r=r, s_=s_, t=t)
+                self.learn(random_batch)
             obs = obs_
 
             # update agent step counter
@@ -89,9 +92,6 @@ class DQN_agent(Agent):
             score += reward
             obs = obs_
         return score
-
-    def store_transition(self, *args):
-        self.replay_memory.push(*args)
 
 
     def learn(self, *args, **kwargs):

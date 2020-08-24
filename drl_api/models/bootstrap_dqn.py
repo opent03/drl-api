@@ -12,6 +12,8 @@ class BootstrapDQN(DQN_Model):
         self.huber_loss = huber_loss
         self.n_heads = n_heads
 
+
+    def init_networks(self):
         self.Q_eval = _BootDQN(n_heads=self.n_heads,
                                n_dim=self.obs_shape[2],
                                out_dim=self.n_actions,
@@ -20,11 +22,11 @@ class BootstrapDQN(DQN_Model):
                                gpu=self.gpu)
 
         self.Q_target = _BootDQN(n_heads=self.n_heads,
-                               n_dim=self.obs_shape[2],
-                               out_dim=self.n_actions,
-                               lr=self.lr,
-                               name='eval',
-                               gpu=self.gpu)
+                                 n_dim=self.obs_shape[2],
+                                 out_dim=self.n_actions,
+                                 lr=self.lr,
+                                 name='target',
+                                 gpu=self.gpu)
 
 
 class _BootDQN(_DQN):

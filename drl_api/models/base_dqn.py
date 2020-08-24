@@ -4,6 +4,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
 from drl_api.models import Model
+from drl_api.memory import ReplayMemory
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -17,12 +18,13 @@ class DQN_Model(Model):
                  lr,
                  min_eps=0.1,
                  eps_decay=1e-5,
+                 memory_size=1e6,
                  gpu=True,
                  nntype='conv'):
 
-
         super().__init__()
-
+        self.memory_size = memory_size
+        self.replay_memory = ReplayMemory(memory_size)
         self.gamma = gamma
         self.env_specs = env_specs
         self.obs_dtype = torch.uint8 if len(env_specs['obs_shape']) == 3 else torch.float32
@@ -30,36 +32,56 @@ class DQN_Model(Model):
         self.act_dtype = torch.uint8
         self.n_actions = env_specs['n_actions']
         self.in_dims = env_specs['in_dims']
-        print(eps)
         self.eps = _eps(eps, min_eps, eps_decay)
         self.lr = lr
         self.gpu = gpu
         self.nntype = nntype
         # Initialize networks
-        self.Q_eval = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=lr, name='eval',gpu=self.gpu, nntype=self.nntype)          # get channel component
-        self.Q_target = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=lr, name='target', gpu=self.gpu, nntype=self.nntype)      # get channel component
+
+
+    def init_networks(self):
+        ''' Called by the agent prior to doing anything '''
+        self.Q_eval = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=self.lr, name='eval', gpu=self.gpu,
+                           nntype=self.nntype)  # get channel component
+        self.Q_target = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=self.lr, name='target', gpu=self.gpu,
+                             nntype=self.nntype)  # get channel component
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
         self.Q_eval.to(self.Q_eval.device)
         self.Q_target.to(self.Q_target.device)
+        print('Networks Initialized!')
 
-
-    def learn(self, **kwargs):
+    def learn(self, batch, **kwargs):
         ''' basic DQN learn '''
         self.Q_eval.optimizer.zero_grad()
-
+        batch_dict = self.process_batch(batch)
+        for key in batch_dict:
+            batch_dict[key] = torch.tensor(batch_dict[key]).to(self.Q_eval.device)
         # convert to torch tensor types, variables are local
-        batch_dict = dict((k,torch.tensor(v).to(self.Q_eval.device)) for k, v in kwargs.items())
-        batch_size = batch_dict['s'].shape[0]
+        # batch_dict = dict((k,torch.tensor(v).to(self.Q_eval.device)) for k, v in kwargs.items())
+        batch_size = batch_dict['state'].shape[0]
         batch_index = np.arange(batch_size, dtype=np.int32)
 
         # dqn step
-        q_eval = self.Q_eval.forward(batch_dict['s'])[batch_index, batch_dict['a']]
-        q_next = self.Q_target.forward(batch_dict['s_'])
-        q_next[batch_dict['t']] = 0.0
-        q_target = batch_dict['r'] + self.gamma * torch.max(q_next, dim=1)[0]
+        q_eval = self.Q_eval.forward(batch_dict['state'])[batch_index, batch_dict['action']]
+        q_next = self.Q_target.forward(batch_dict['next_state'])
+        q_next[batch_dict['terminal']] = 0.0
+        q_target = batch_dict['reward'] + self.gamma * torch.max(q_next, dim=1)[0]
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
         self.Q_eval.optimizer.step()
+
+
+    def process_batch(self, batch):
+        ''' convert a list of named tuples to batch dictionary '''
+        batch_dict = {}
+        fields = batch[0]._fields
+        for field in fields:
+            batch_dict[field] = []
+            for i in range(len(batch)):
+                batch_dict[field].append(getattr(batch[i], field)) # ah yes minuscule brain approach here
+
+        return batch_dict
+
 
     def get_action(self, state):
         ''' passes action through net and do some argmax thingies '''
@@ -67,12 +89,27 @@ class DQN_Model(Model):
         q_vals = self.Q_eval(state)
         return torch.argmax(q_vals).item()
 
+
     def replace_target_network(self):
         self.Q_target.load_state_dict(self.Q_eval.state_dict())
+
 
     def load_save(self, path):
         self.Q_eval.load_state_dict(torch.load(path))
         self.Q_target.load_state_dict(torch.load(path))
+
+
+    def sample(self, *args, **kwargs):
+        ''' Sample from replay memory '''
+        return self.replay_memory.sample(*args, **kwargs)
+
+
+    def get_counter(self):
+        return self.replay_memory.counter
+
+
+    def store_transition(self, *args):
+        self.replay_memory.push(*args)
 
 
 
@@ -117,6 +154,7 @@ class _DQN(nn.Module):
         self.loss = nn.MSELoss()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() and gpu else 'cpu')
 
+
     def forward(self, x):
         x = torch.tensor(x, dtype=torch.float).to(self.device)
         qvals = None
@@ -134,6 +172,7 @@ class _DQN(nn.Module):
 
         return qvals
 
+
 class _eps:
     ''' linear epsilon scheduler '''
     def __init__(self, eps, min_eps, decay):
@@ -141,10 +180,12 @@ class _eps:
         self.min_eps = min_eps
         self.decay = decay
 
+
     def get_eps(self):
         ''' get epsilon + decay '''
         self.eps = max(self.min_eps, self.eps - self.decay)
         return self.eps
+
 
     def get_eps_no_decay(self):
         return self.eps
