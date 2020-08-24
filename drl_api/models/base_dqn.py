@@ -36,7 +36,9 @@ class DQN_Model(Model):
         self.lr = lr
         self.gpu = gpu
         self.nntype = nntype
-        # Initialize networks
+        self.name = 'DQN'
+        # indicates termination of episode, useful for bootdqn
+        self.done = False
 
 
     def init_networks(self):
@@ -45,12 +47,17 @@ class DQN_Model(Model):
                            nntype=self.nntype)  # get channel component
         self.Q_target = _DQN(in_dim=self.in_dims, out_dim=self.n_actions, lr=self.lr, name='target', gpu=self.gpu,
                              nntype=self.nntype)  # get channel component
-        self.Q_target.load_state_dict(self.Q_eval.state_dict())
+
+        # initialize weights
+        self.Q_eval.apply(self.Q_eval.init_weights)
+
+        # setup eval-target networks
+        self.replace_target_network()
         self.Q_eval.to(self.Q_eval.device)
         self.Q_target.to(self.Q_target.device)
         print('Networks Initialized!')
 
-    def learn(self, batch, **kwargs):
+    def learn(self, batch):
         ''' basic DQN learn '''
         self.Q_eval.optimizer.zero_grad()
         batch_dict = self.process_batch(batch)
@@ -62,25 +69,13 @@ class DQN_Model(Model):
         batch_index = np.arange(batch_size, dtype=np.int32)
 
         # dqn step
-        q_eval = self.Q_eval.forward(batch_dict['state'])[batch_index, batch_dict['action']]
+        q_eval = self.Q_eval.forward(batch_dict['state'])[batch_index, batch_dict['action']] # q values only for the action taken
         q_next = self.Q_target.forward(batch_dict['next_state'])
         q_next[batch_dict['terminal']] = 0.0
-        q_target = batch_dict['reward'] + self.gamma * torch.max(q_next, dim=1)[0]
+        q_target = batch_dict['reward'] + self.gamma * torch.max(q_next, dim=1)[0] # [0] chooses the values, forgets the indices
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
         self.Q_eval.optimizer.step()
-
-
-    def process_batch(self, batch):
-        ''' convert a list of named tuples to batch dictionary '''
-        batch_dict = {}
-        fields = batch[0]._fields
-        for field in fields:
-            batch_dict[field] = []
-            for i in range(len(batch)):
-                batch_dict[field].append(getattr(batch[i], field)) # ah yes minuscule brain approach here
-
-        return batch_dict
 
 
     def get_action(self, state):
@@ -153,6 +148,13 @@ class _DQN(nn.Module):
         self.optimizer = optim.RMSprop(self.parameters(), lr=lr)
         self.loss = nn.MSELoss()
         self.device = torch.device('cuda:0' if torch.cuda.is_available() and gpu else 'cpu')
+
+
+    def init_weights(self, m):
+        ''' Xavier initialization '''
+        if type(m) in [nn.Linear, nn.Conv2d]:
+            torch.nn.init.xavier_uniform_(m.weight)
+            m.bias.data.fill_(0.01)
 
 
     def forward(self, x):

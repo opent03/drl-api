@@ -14,7 +14,7 @@ import gym
 
 def make_agent(stack=4):
 
-    model_choices = ["DQN"]
+    model_choices = ['DQN', 'DDQN']
     args = args_parser.parse_args(model_choices)
 
     # create environments
@@ -23,7 +23,7 @@ def make_agent(stack=4):
     nntype = 'conv' if 'NoFrameskip' in args.env_id else 'dense'
     env_name = args.env_id.replace('/','')
     # create model
-    model = models.DQN_Model(
+    model = models.DDQN_Model(
                              env_specs=env_specs,
                              eps=args.eps,
                              gamma=args.gamma,

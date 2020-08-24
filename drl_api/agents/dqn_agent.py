@@ -27,7 +27,6 @@ class DQN_agent(Agent):
         self.scores = []
         self.avg_scores = []
         self.eps_history = []
-
         # initialize neural networks
         self.model.init_networks()
 
@@ -37,6 +36,7 @@ class DQN_agent(Agent):
         score = 0
         obs = self._format_img(self.env_train.reset())
         done = False
+        self.model.done = False
         while not done:
             if render:
                 self.env_train.render()
@@ -71,9 +71,10 @@ class DQN_agent(Agent):
                 self.model.replace_target_network()
                 print('Step {}: Target Q-Net replaced!'.format(self.agent_step))
 
+        self.model.done = True
         # save architecture if best
         if score > np.max(self.scores + [0]):
-            utils.save.save_model(self.model.Q_eval, 'drl_api/saves', self.env_name)
+            utils.save.save_model(self.model.Q_eval, 'drl_api/saves', self.env_name, self.model.name)
             print('Best score achieved, parameters are saved!')
         return score
 
