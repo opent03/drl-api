@@ -7,7 +7,7 @@ from drl_api.models import _DQN
 from drl_api.memory import ReplayMemory
 
 class BootstrapDQN(DQN_Model):
-    ''' Base Bootstrap DQN Model '''
+    ''' Base Bootstrap DQN Model, only supports convolutional features at the moment '''
     def __init__(self, huber_loss, n_heads, p=0.5, **kwargs):
         super().__init__(**kwargs)
 
@@ -107,6 +107,9 @@ class _BootDQN(_DQN):
 
         return q_vals
 
+    def forward_all_heads(self, x):
+        x = torch.tensor(x, dtype=torch.float).to(self.device)
+        q_vals = [self.heads[i](x) for i in range(self.n_heads)]
 
     def set_head(self, n):
         self.cur_head = n
