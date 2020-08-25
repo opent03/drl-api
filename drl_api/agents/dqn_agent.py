@@ -141,7 +141,7 @@ class DQN_agent(Agent):
             self.avg_scores.append(avg_score)
 
             # evaluate every 100 steps
-            if episode % 10 == 0:
+            if episode % 50 == 0:
                 self.eval_step(render=False)
             fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}'
             print(fmt.format(episode+1,
