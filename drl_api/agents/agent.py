@@ -1,5 +1,4 @@
 import numpy as np
-import time
 from abc import ABCMeta, abstractmethod
 
 class Agent(metaclass=ABCMeta):

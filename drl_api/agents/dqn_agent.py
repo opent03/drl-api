@@ -132,23 +132,23 @@ class DQN_agent(Agent):
 
     def train(self, episodes, *args, **kwargs):
         self.eval_scores = []
-        with open('drl_api/logs/{}-{}.log'.format(self.env_name, self.model.name),'w+') as f:
-            for episode in range(episodes):
-                self.eps_history.append(self.model.eps.get_eps_no_decay())
+        for episode in range(episodes):
+            self.eps_history.append(self.model.eps.get_eps_no_decay())
 
-                score = self.train_step(*args, **kwargs)
-                self.scores.append(score)
-                avg_score = np.mean(self.scores[-100:])
-                self.avg_scores.append(avg_score)
-                f.write(str(avg_score) + '\n')
-                f.flush()
-                # evaluate every 100 steps
-                if episode % 50 == 0:
-                    self.eval_step(render=False)
-                fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}'
-                print(fmt.format(episode+1,
-                                 score,
-                                 avg_score,
-                                 self.model.eps.get_eps_no_decay(),0))
+            score = self.train_step(*args, **kwargs)
+            self.scores.append(score)
+            avg_score = np.mean(self.scores[-100:])
+            self.avg_scores.append(avg_score)
 
-        f.close()
+            # evaluate every 100 steps
+            if episode % 50 == 0:
+                self.eval_step(render=False)
+            fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}'
+            print(fmt.format(episode+1,
+                             score,
+                             avg_score,
+                             self.model.eps.get_eps_no_decay(),0))
+        with open('drl_api/logs/{}-{}.log'.format(self.env_name, self.model.name), 'w+') as f:
+            self.avg_scores = np.array(self.avg_scores)
+            np.save(self.avg_scores)
+            f.close()
