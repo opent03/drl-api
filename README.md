@@ -15,5 +15,5 @@ python3 -m examples.run_dqn_agent --env-id=BreakoutNoFrameskip-v4 --model=DQN [-
 ## Load a saved model and evaluate
 Models are saved automatically in drl_api/saves/. A highly intuitive example command:
 ```
-python3 -m examples.play --save_name=BreakoutNoFrameskip-v4-_DQN --rounds=50
+python3 -m examples.play --save_name=BreakoutNoFrameskip-v4-DDQN --rounds=50
 ```
