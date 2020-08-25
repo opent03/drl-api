@@ -5,7 +5,7 @@ from drl_api.models import DQN_Model
 class DDQN_Model(DQN_Model):
     ''' Class for Double DQN '''
     def __init__(self, *args, **kwargs):
-        super(DDQN_Model, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.name = 'DDQN'
 
     def learn(self, batch):
@@ -23,7 +23,6 @@ class DDQN_Model(DQN_Model):
         q_next[batch_dict['terminal']] = 0.0
         q_next_eval[batch_dict['terminal']] = 0.0
 
-        # q_next_eval = self.Q_eval.forward(batch_dict['next_state'])
         ddqn_idx = torch.argmax(q_next_eval, dim=1)
         q_target = batch_dict['reward'] + self.gamma*q_next[batch_index, ddqn_idx]
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)

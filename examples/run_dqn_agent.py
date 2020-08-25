@@ -1,6 +1,5 @@
 from drl_api.utils import args_parser
-from drl_api import envs, agents, memory, models, utils
-import gym
+from drl_api import envs, agents, models
 ''' 
     parser has arguments:
     env_id
@@ -14,8 +13,8 @@ import gym
 
 def make_agent(stack=4):
 
-    model_choices = ['DQN', 'DDQN']
-    model_dict = {'DQN': models.DQN_Model, 'DDQN': models.DDQN_Model}
+    model_choices = ['DQN', 'DDQN', 'BootstrapDQN']
+    model_dict = {'DQN': models.DQN_Model, 'DDQN': models.DDQN_Model, 'BootstrapDQN': models.BootstrapDQN_Model}
     args = args_parser.parse_args(model_choices)
 
     # create environments

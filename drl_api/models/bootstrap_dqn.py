@@ -6,7 +6,7 @@ from drl_api.models import DQN_Model
 from drl_api.models import _DQN
 from drl_api.memory import ReplayMemory
 
-class BootstrapDQN(DQN_Model):
+class BootstrapDQN_Model(DQN_Model):
     ''' Base Bootstrap DQN Model, only supports convolutional features at the moment '''
     def __init__(self, huber_loss, n_heads, p=0.5, **kwargs):
         super().__init__(**kwargs)
@@ -61,12 +61,20 @@ class BootstrapDQN(DQN_Model):
         batch_index = np.arange(batch_size, dtype=np.int32)
 
         # ddqn step
-        q_eval = self.Q_eval.forward(batch_dict['state'])[batch_index, batch_dict['action']]
-        q_next = self.Q_target.forward(batch_dict['state'])
+        q_eval = self.Q_eval.forward(batch_dict['state'], all=True)[batch_index, batch_dict['action']] # get q_evals for all n_heads
+        q_next = self.Q_target.forward(batch_dict['next_state'], all=True)
+        q_next_eval = self.Q_eval.forward(batch_dict['next_state'], all=True)
         q_next[batch_dict['terminal']] = 0.0
-        q_next_eval = self.Q_eval.forward(batch_dict['next_state'])
-        #acts = torch.argmax(self.)
-        #q_target = batch_dict['reward'] + self.gamma * torch.max(2)
+        q_next_eval[batch_dict['terminal']] = 0.0
+
+        for i in range(self.n_heads):
+            # sequentially backpropagate gradient info
+            ddqn_idx = torch.argmax(q_next_eval[i], dim=1)
+            q_target = batch_dict['reward'] + self.gamma * q_next[i][batch_index, ddqn_idx]
+            loss = self.Q_eval.loss(q_target, q_eval[i]).to(self.Q_eval.device)
+            loss.backward()
+
+        self.Q_eval.optimizer.step()
 
 
 
@@ -91,7 +99,7 @@ class _BootDQN(_DQN):
 
 
     def make_head(self, in_dim, out_dim):
-        ''' Creates a bootstrap head '''
+        ''' Creates a bootstrap head, universal approximators go brrrr '''
         return nn.Sequential(
             nn.Linear(in_dim, 512),
             nn.ReLU(),
@@ -99,17 +107,17 @@ class _BootDQN(_DQN):
         )
 
 
-    def forward(self, x):
+    def forward(self, x, all=False):
         x = torch.tensor(x, dtype=torch.float).to(self.device)
         x = self.conv(x)
         x = x.view(x.size(0), -1)
-        q_vals = self.heads[self.cur_head](x)
+        if not all:
+            q_vals = self.heads[self.cur_head](x)
+        else:
+            q_vals = [self.heads[i](x) for i in range(self.n_heads)]
 
         return q_vals
 
-    def forward_all_heads(self, x):
-        x = torch.tensor(x, dtype=torch.float).to(self.device)
-        q_vals = [self.heads[i](x) for i in range(self.n_heads)]
 
     def set_head(self, n):
         self.cur_head = n
