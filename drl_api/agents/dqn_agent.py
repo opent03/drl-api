@@ -30,6 +30,8 @@ class DQN_agent(Agent):
         # initialize neural networks
         self.model.init_networks()
 
+        self.max_avg_score = 0
+
 
     def train_step(self, render=False):
         '''Sample a 1-episode trajectory and learn simultaneously'''
@@ -72,27 +74,17 @@ class DQN_agent(Agent):
                 print('Step {}: Target Q-Net replaced!'.format(self.agent_step))
 
         self.model.done = True
-        # save architecture if best
-        if score > np.max(self.scores + [0]):
+        return score
+
+
+    def eval_step(self, rounds=10, render=False):
+        ''' evaluate model over # rounds, if best then save '''
+        avg_score = self.play(rounds=rounds)
+        if  avg_score > self.max_avg_score:
+            self.max_avg_score = avg_score
             utils.save.save_model(self.model.Q_eval, 'drl_api/saves', self.env_name, self.model.name)
             print('Best score achieved, parameters are saved!')
-        return score
-
-
-    def eval_step(self, render=False):
-        '''1-episode evaluation'''
-        score = 0
-        count = 0
-        obs = self._format_img(self.env_eval.reset())
-        done = False
-        while not done:
-            count += 1
-            action = self.act_eval(obs)
-            obs_, reward, done, info = self.env_eval.step(action)
-            obs_ = self._format_img(obs_)
-            score += reward
-            obs = obs_
-        return score
+        print('Evaluation ended. Average score achieved: {}. Best average scores: {}'.format(avg_score, self.max_avg_score))
 
 
     def learn(self, *args, **kwargs):
@@ -112,8 +104,11 @@ class DQN_agent(Agent):
 
     def act_eval(self, state):
         ''' Choose an action at evaluation time '''
-        ''' We make it so it follows target policy '''
-        return self.model.get_action(np.expand_dims(state, axis=0))
+        if np.random.uniform(0,1,1) > self.model.eps.get_min_eps():
+            action = self.model.get_action(np.expand_dims(state, axis=0))  #
+        else:
+            action = np.random.choice(self.model.n_actions)
+        return action
 
 
     def get_env_specs(self, stack_frames):
@@ -140,18 +135,14 @@ class DQN_agent(Agent):
         for episode in range(episodes):
             self.eps_history.append(self.model.eps.get_eps_no_decay())
 
-            #train
-            #print('\n --- Beginning training loop: Episode {} --- \n'.format(episode+1))
             score = self.train_step(*args, **kwargs)
             self.scores.append(score)
             avg_score = np.mean(self.scores[-100:])
             self.avg_scores.append(avg_score)
-            #print('\n --- Training loop done! --- \n')
-            #eval
-            #print(' --- Starting evaluation sequence --- ')
-            #eval_score = self.eval_step()
-            #self.eval_scores.append(eval_score)
-           # print('\n --- Evaluation sequence done! --- \n')
+
+            # evaluate every 100 steps
+            if episode % 10 == 0:
+                self.eval_step(render=False)
             fmt = 'episode {}, score {:.2f}, avg_score {:.2f}, eps {:.3f}, eval_score {:.2f}'
             print(fmt.format(episode+1,
                              score,

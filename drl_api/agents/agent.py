@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 from abc import ABCMeta, abstractmethod
 
 class Agent(metaclass=ABCMeta):
@@ -59,22 +59,23 @@ class Agent(metaclass=ABCMeta):
 
     def play(self, rounds):
         # a method for the agent to just play the game
-        score = 0
+        scores = []
         obs = self._format_img(self.env_eval.reset())
-        done = False
         for _ in range(rounds):
-            print('begin round')
+            score = 0
+            done = False
             while not done:
-                self.env_eval.render()
-                action = self.act_train(obs)
+                action = self.act_eval(obs)
                 # run action
                 obs_, reward, done, info = self.env_eval.step(action)
                 score += reward
                 if done:
-                    print('end of episode')
                     obs = self.env_eval.reset()
+                    obs = self._format_img(obs)
+                    break
                 obs = self._format_img(obs_)
-        return score
+            scores.append(score)
+        return sum(scores)/len(scores)  # average scores
 
 
     def _format_img(self, img):

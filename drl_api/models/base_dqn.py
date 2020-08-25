@@ -191,3 +191,7 @@ class _eps:
 
     def get_eps_no_decay(self):
         return self.eps
+
+
+    def get_min_eps(self):
+        return self.min_eps

@@ -1,5 +1,6 @@
 from drl_api.utils import args_parser
 from drl_api import envs, agents, models
+import drl_api
 ''' 
     parser has arguments:
     env_id
@@ -13,9 +14,7 @@ from drl_api import envs, agents, models
 
 def make_agent(stack=4):
 
-    model_choices = ['DQN', 'DDQN', 'BootstrapDQN']
-    model_dict = {'DQN': models.DQN_Model, 'DDQN': models.DDQN_Model, 'BootstrapDQN': models.BootstrapDQN_Model}
-    args = args_parser.parse_args(model_choices)
+    args = args_parser.parse_args(drl_api.model_choices)
 
     # create environments
     env = envs.make_env(args.env_id, stack=stack)
@@ -23,7 +22,7 @@ def make_agent(stack=4):
     nntype = 'conv' if 'NoFrameskip' in args.env_id else 'dense'
     env_name = args.env_id.replace('/','')
     # create model
-    model = model_dict[args.model](
+    model = drl_api.model_dict[args.model](
                              env_specs=env_specs,
                              eps=args.eps,
                              gamma=args.gamma,

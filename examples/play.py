@@ -3,25 +3,26 @@ Basic module to load a bot and play a game
 '''
 from drl_api import envs, models, agents
 import os
+import drl_api
 import argparse
 
 
-def load_model(path, name,  stack):
+def load_model(path, name, arch, stack):
     env_id = name
     print(env_id)
     env = envs.make_env(env_id, stack= stack)
     env_specs = envs.get_env_specs(env['env_train'], stack)
-    model = models.DQN_Model(env_specs=env_specs,
+    model = drl_api.model_dict[arch](env_specs=env_specs,
                              eps=1,
                              gamma=0.99,
                              lr=2.5e-4,
                              gpu=True,
+                             memory_size=2e4,
                              nntype='conv'
                              )
 
     agent = agents.DQN_agent(target_update=5e3,
                              batch_size=32,
-                             memory_size=2e4,
                              learn_frequency=4,
                              env_train=env['env_train'],
                              env_eval=env['env_eval'],
@@ -44,8 +45,10 @@ def main():
     args = parse_args()
     saves_path = 'drl_api/saves'
     path = os.path.join(saves_path, args.save_name)
-    name = args.save_name.split('_')[0][:-1]
-    agent = load_model(path, name, stack=4)
+    tmp = args.save_name.split('-')
+    name = '-'.join(tmp[:-1])
+    arch = tmp[-1]
+    agent = load_model(path, name, arch, stack=4)
     agent.play(rounds=args.rounds)
 
 if __name__ == '__main__':
