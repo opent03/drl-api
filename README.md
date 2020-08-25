@@ -9,7 +9,7 @@ Maintained regularly, currently supports most Atari NoFrameskip environments and
 ## Train model
 A highly intuitive example command:
 ```
-python3 -m examples.run_dqn_agent --env-id=BreakoutNoFrameskip-v4 --model=DQN [--render] [--no-gpu]
+python3 -m examples.run_dqn_agent --env-id=BreakoutNoFrameskip-v4 --model=DDQN [--render] [--no-gpu]
 ```
 
 ## Load a saved model and evaluate
