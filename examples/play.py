@@ -21,6 +21,7 @@ def load_model(path, name, arch, stack):
                              nntype='conv'
                              )
 
+
     agent = agents.DQN_agent(target_update=5e3,
                              batch_size=32,
                              learn_frequency=4,
@@ -34,11 +35,14 @@ def load_model(path, name, arch, stack):
 
     return agent
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_name', required=True, type=str)
     parser.add_argument('--rounds', default=50, type=int)
+    parser.add_argument('--render', dest='render', action='store_true')
     return parser.parse_args()
+
 
 def main():
     # do something here
@@ -49,7 +53,7 @@ def main():
     name = '-'.join(tmp[:-1])
     arch = tmp[-1]
     agent = load_model(path, name, arch, stack=4)
-    agent.play(rounds=args.rounds)
+    agent.play(rounds=args.rounds, render=args.render)
 
 if __name__ == '__main__':
     main()

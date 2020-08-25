@@ -57,7 +57,7 @@ class Agent(metaclass=ABCMeta):
         return state_batch, action_batch, reward_batch, new_state_batch, terminal_batch
 
 
-    def play(self, rounds):
+    def play(self, rounds, render=False):
         # a method for the agent to just play the game
         scores = []
         obs = self._format_img(self.env_eval.reset())
@@ -65,6 +65,8 @@ class Agent(metaclass=ABCMeta):
             score = 0
             done = False
             while not done:
+                if render:
+                    self.env_eval.render()
                 action = self.act_eval(obs)
                 # run action
                 obs_, reward, done, info = self.env_eval.step(action)
