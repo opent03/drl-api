@@ -29,7 +29,8 @@ def make_agent(stack=4):
                              lr=args.lr,
                              memory_size=args.mem_size,
                              gpu=args.gpu,
-                             nntype=nntype
+                             nntype=nntype,
+                             eps_decay=args.eps_decay
                              )
 
     # create agent
