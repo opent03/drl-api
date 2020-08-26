@@ -1,6 +1,7 @@
 import torch
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
+
 
 
 class Model(metaclass=ABCMeta):
@@ -24,3 +25,7 @@ class Model(metaclass=ABCMeta):
                 batch_dict[field].append(getattr(batch[i], field)) # ah yes minuscule brain approach here
 
         return batch_dict
+
+    @abstractmethod
+    def learn(self):
+        pass

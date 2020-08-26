@@ -107,7 +107,6 @@ class DQN_Model(Model):
         self.replay_memory.push(*args)
 
 
-
 class _DQN(nn.Module):
     ''' Basic Implementation of common DQN nets '''
     def __init__(self, in_dim, out_dim, lr, name='eval', nntype='conv', gpu=True):

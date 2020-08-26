@@ -1,4 +1,5 @@
 from drl_api.envs.atari import wrap_deepmind_atari
+from drl_api.envs.linear import LinearMDP
 import numpy as np
 import bsuite
 from bsuite.utils import gym_wrapper
