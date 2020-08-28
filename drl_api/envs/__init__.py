@@ -1,5 +1,6 @@
 from drl_api.envs.atari import wrap_deepmind_atari
-from drl_api.envs.linear import LinearMDP
+from drl_api.envs.linear_agent import LinearMDP
+from drl_api.envs.riverswim import RiverSwim
 import numpy as np
 import bsuite
 from bsuite.utils import gym_wrapper
@@ -26,6 +27,12 @@ def get_env_specs(env, stack_frames):
             'obs_len': obs_len,
             'n_actions': n_actions,
             'in_dims': in_dims}
+
+
+def get_linear_specs(lin_env):
+    ''' get params of the linear environment '''
+    return {'n_states': lin_env.n_states, 'n_actions': lin_env.n_actions}
+
 
 def make_env(env_id, stack):
     if 'NoFrameskip' in env_id:     # atari env

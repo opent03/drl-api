@@ -64,7 +64,7 @@ class LinearMDP:
         return matrix
 
 
-    def get_feature_map(self):
+    def gen_feature_map(self):
         ''' Generate a linear feature map phi'''
         M = self.rng.uniform(0, 1, size=(self.n_states, self.n_states))
         for i in range(self.n_states):
