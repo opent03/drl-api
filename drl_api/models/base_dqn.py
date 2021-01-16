@@ -73,7 +73,7 @@ class DQN_Model(Model):
         q_next = self.Q_target.forward(batch_dict['next_state'])
         q_next[batch_dict['terminal']] = 0.0
         q_target = batch_dict['reward'] + self.gamma * torch.max(q_next, dim=1)[0] # [0] chooses the values, forgets the indices
-        loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
+        loss = self.Q_eval.loss(q_target.double(), q_eval.double()).to(self.Q_eval.device)
         loss.backward()
         self.Q_eval.optimizer.step()
 

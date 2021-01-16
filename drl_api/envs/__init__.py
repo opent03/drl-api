@@ -3,7 +3,10 @@ from drl_api.envs.linear_agent import LinearMDP
 from drl_api.envs.riverswim import RiverSwim
 import numpy as np
 import bsuite
+import gym
 from bsuite.utils import gym_wrapper
+
+gym_envs = [env_specs.id for env_specs in gym.envs.registry.all()]
 
 def get_env_specs(env, stack_frames):
     ''' gets env parameters '''
@@ -35,8 +38,10 @@ def get_linear_specs(lin_env):
 
 
 def make_env(env_id, stack):
-    if 'NoFrameskip' in env_id:     # atari env
+    #    # atari env
+    if env_id in gym_envs:
         return wrap_deepmind_atari(env_id, stack)
+
     else: # bsuite env
         env = bsuite.load_from_id(env_id)
         env = gym_wrapper.GymFromDMEnv(env)

@@ -27,5 +27,5 @@ class Model(metaclass=ABCMeta):
         return batch_dict
 
     @abstractmethod
-    def learn(self):
+    def learn(self, batch):
         pass
